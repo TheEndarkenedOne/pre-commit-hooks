@@ -3,4 +3,3 @@
   entry: gyp-format
   language: python
   files: \.gypi?$
-  args: ['-i']
