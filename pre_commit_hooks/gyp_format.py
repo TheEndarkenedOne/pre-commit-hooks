@@ -1,4 +1,4 @@
-#!/usr/bin/env pthon
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 William Ewing.
@@ -35,20 +35,6 @@ import os
 import sys
 
 
-def load_gyp(infile):
-    """Load a GYP project information to a file."""
-    gyp_root = ast.literal_eval(infile.read())
-    if not isinstance(gyp_root, dict):
-        raise TypeError('Root object is not a dictionary.')
-    return gyp_root
-
-
-def dump_gyp(outfile, gyp_root):
-    """Write an object to a file as formatted JSON."""
-    json.dump(gyp_root, outfile,
-              indent=4, separators=(',', ': '), sort_keys=True)
-
-
 @contextlib.contextmanager
 def replacefile(path, text=True):
     """Context manager for best-effort atomic file replacement."""
@@ -65,8 +51,6 @@ def main(argv=None):
     # Parse arguments
     argv = argv if argv is not None else sys.argv[1:]
     parser = argparse.ArgumentParser(description='Format GYP project files.')
-    parser.add_argument('-i', '--in-place', action='store_true',
-                        help='Format files in-place.')
     parser.add_argument('files', metavar='FILE', type=str, nargs='+',
                         help='GYP project files to format.')
     args = parser.parse_args(argv)
@@ -74,34 +58,35 @@ def main(argv=None):
     # Process files
     retv = 0
     for path in args.files:
-
+        # Read input
         try:
-            with open(path, 'rb') as infile:
-                gyp_root = load_gyp(infile)
-
+            gyp_text = open(path, 'rb').read()
+            gyp_data = ast.literal_eval(gyp_text)
         except (IOError, ValueError, TypeError) as exc:
-            retv = -1
+            retv = 1
             print('Error loading %r: %s' % (path, exc))
             continue
 
+        # Format output
         try:
-            if args.in_place:
-                try:
-                    with replacefile(path) as swp_file:
-                        dump_gyp(swp_file, gyp_root)
-
-                except IOError as exc:
-                    print('Error updating %r: %s' % (path, exc))
-                    retv = -1
-                    continue
-
-            else:
-                dump_gyp(sys.stdout, gyp_root)
-
+            out_text = json.dumps(gyp_data, indent=4, separators=(',', ': '),
+                                  sort_keys=True)
         except TypeError as exc:
+            retv = 1
             print('Error formatting %r: %s' % (path, exc))
-            retv = -1
             continue
+
+        # Check if they match
+        if gyp_text == out_text:
+            continue
+
+        # Update output
+        try:
+            retv = 1
+            with replacefile(path, text=False) as outfile:
+                outfile.write(out_text)
+        except (IOError, OSError) as exc:
+            print('Error updating %r: %s' % (path, exc))
 
     # Return
     return retv
