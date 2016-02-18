@@ -1,0 +1,6 @@
+- id: gyp-format
+  name: GYP formatter.
+  entry: gyp-format
+  language: python
+  files: \.gypi?$
+  args: ['-i']
