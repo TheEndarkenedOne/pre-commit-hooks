@@ -62,6 +62,8 @@ def main(argv=None):
         try:
             gyp_text = open(path, 'rb').read()
             gyp_data = ast.literal_eval(gyp_text)
+            if not isinstance(gyp_data, dict):
+                raise TypeError('Root element is not a dictionary.')
         except (IOError, ValueError, TypeError) as exc:
             retv = 1
             print('Error loading %r: %s' % (path, exc))
