@@ -3,3 +3,8 @@
   entry: gyp-format
   language: python
   files: \.gypi?$
+- id: clang-format
+  name: Wrapper around clang-format.
+  entry: clang-format
+  language: python
+  files: \.(c|cpp|h|hpp)$
